@@ -1,0 +1,93 @@
+<html>
+<head>
+<title>FusionBeats 1.1 Release</title>
+<HTA:APPLICATION
+    ID="FlopApp"
+    APPLICATIONNAME="FusionBeats GUI"
+    BORDER="thin"
+    BORDERSTYLE="normal"
+    CAPTION="yes"
+    SHOWINTASKBAR="yes"
+    SINGLEINSTANCE="yes"
+    SYSMENU="yes"
+    SCROLL="no"
+    WINDOWSTATE="normal"
+>
+<style>
+body { font-family: Arial; margin: 10px; }
+textarea { width: 100%; height: 80px; }
+button { margin-top: 5px; }
+#log { width: 100%; height: 150px; overflow: auto; border: 1px solid #ccc; margin-top: 10px; padding: 5px; background: #f9f9f9;}
+.device { margin-bottom: 5px; }
+.device label { width: 60px; display: inline-block; }
+.device input[type=text] { width: 60px; }
+</style>
+<script language="VBScript">
+Option Explicit
+
+Dim shell
+Set shell = CreateObject("WScript.Shell")
+
+Function GetDevicesStr
+    Dim devicesStr, deviceName, chkBox, freqBox, durBox, delayBox
+    devicesStr = ""
+    
+    Dim names
+    names = Array("HDD1","HDD2","Floppy","DVD1","DVD2","CD1")
+    
+    Dim i
+    For i = 0 To UBound(names)
+        deviceName = names(i)
+        Set chkBox = document.getElementById("chk_" & deviceName)
+        Set freqBox = document.getElementById("freq_" & deviceName)
+        Set durBox = document.getElementById("dur_" & deviceName)
+        Set delayBox = document.getElementById("delay_" & deviceName)
+        If chkBox.Checked Then
+            If devicesStr <> "" Then devicesStr = devicesStr & ";"
+            devicesStr = devicesStr & deviceName & "," & freqBox.value & "," & durBox.value & "," & delayBox.value
+        End If
+    Next
+    GetDevicesStr = devicesStr
+End Function
+
+Sub RunRhythm
+    Dim rhythmText, fso, rhythmFile, devicesStr, cmd
+    rhythmText = document.getElementById("rhythm").value
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    rhythmFile = fso.GetSpecialFolder(2) & "\floppotron_rhythm.txt"
+    Dim file
+    Set file = fso.CreateTextFile(rhythmFile, True)
+    file.Write rhythmText
+    file.Close
+    
+    devicesStr = GetDevicesStr()
+    If devicesStr = "" Then
+        MsgBox "Не выбрано ни одного устройства!", vbExclamation
+        Exit Sub
+    End If
+    
+    cmd = "cscript //nologo FloppotronLogic.vbs """ & rhythmFile & """ """ & devicesStr & """"
+    document.getElementById("log").innerHTML = "Запуск: " & cmd & "<br>"
+    shell.Run cmd, 1, False
+End Sub
+</script>
+</head>
+
+<body>
+<h2>Floppotron GUI</h2>
+<h3>Выберите устройства и настройте параметры:</h3>
+
+<div class="device"><input type="checkbox" id="chk_HDD1" checked> <b>HDD1</b> Freq <input type="text" id="freq_HDD1" value="440"> Dur <input type="text" id="dur_HDD1" value="200"> Delay <input type="text" id="delay_HDD1" value="50"></div>
+<div class="device"><input type="checkbox" id="chk_HDD2" checked> <b>HDD2</b> Freq <input type="text" id="freq_HDD2" value="440"> Dur <input type="text" id="dur_HDD2" value="200"> Delay <input type="text" id="delay_HDD2" value="50"></div>
+<div class="device"><input type="checkbox" id="chk_Floppy" checked> <b>Floppy</b> Freq <input type="text" id="freq_Floppy" value="440"> Dur <input type="text" id="dur_Floppy" value="200"> Delay <input type="text" id="delay_Floppy" value="50"></div>
+<div class="device"><input type="checkbox" id="chk_DVD1" checked> <b>DVD1</b> Freq <input type="text" id="freq_DVD1" value="440"> Dur <input type="text" id="dur_DVD1" value="200"> Delay <input type="text" id="delay_DVD1" value="50"></div>
+<div class="device"><input type="checkbox" id="chk_DVD2" checked> <b>DVD2</b> Freq <input type="text" id="freq_DVD2" value="440"> Dur <input type="text" id="dur_DVD2" value="200"> Delay <input type="text" id="delay_DVD2" value="50"></div>
+<div class="device"><input type="checkbox" id="chk_CD1" checked> <b>CD1</b> Freq <input type="text" id="freq_CD1" value="440"> Dur <input type="text" id="dur_CD1" value="200"> Delay <input type="text" id="delay_CD1" value="50"></div>
+
+<h3>Введите ритм (пробел = пауза, "-" = одновременно):</h3>
+<textarea id="rhythm">HDD1 HDD2-1 HDD2-1 HDD2 Floppy HDD1</textarea><br>
+<button onclick="RunRhythm">Проиграть ритм</button>
+
+<div id="log"></div>
+</body>
+</html>
